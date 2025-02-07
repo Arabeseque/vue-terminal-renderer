@@ -3,6 +3,8 @@ import { createRenderer } from '@vue/runtime-core';
 
 /**
  * TerminalRenderer 用于调度终端输出更新
+ * NOTE:性能优化 1. 避免频繁的终端刷新 2. lastOutput 用于比较前后输出内容是否一致
+ * NOTE: 解析在 obsidian
  */
 class TerminalRenderer {
   constructor() {
@@ -13,6 +15,7 @@ class TerminalRenderer {
   scheduleRender(rootNode) {
     if (!this.isRenderScheduled) {
       this.isRenderScheduled = true;
+      // NOTE: 避免频繁的终端刷新，使用 process.nextTick 延迟渲染
       process.nextTick(() => this.render(rootNode));
     }
   }
@@ -38,19 +41,10 @@ class TerminalRenderer {
     // 根据节点类型构建文本
     if (node.type === 'text') {
       result += String(node.text || '');
-    } else if (node.type === 'comment') {
-      // 如果是注释节点，可选择不输出或输出特定格式
-      // result += `<!-- ${node.text} -->`;
-    } else if (typeof node.type === 'string') {
-      // 对于元素节点，遍历子节点
-      if (node.children && node.children.length > 0) {
-        result += node.children.map(child => this.collectOutput(child)).join('');
-      }
-    } else if (node.type === 'root') {
-      // 根节点直接拼接子节点
-      if (node.children && node.children.length > 0) {
-        result += node.children.map(child => this.collectOutput(child)).join('');
-      }
+    }
+
+    if (node.children && node.children.length > 0) {
+      result += node.children.map(child => this.collectOutput(child)).join('');
     }
 
     return result;

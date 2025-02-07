@@ -19,13 +19,18 @@ createApp(Counter).mount(root);
 
 // 设置终端输入处理
 const stdin = process.stdin;
+// NOTE: setRawMode 会使得输入字符不可见，但是我们可以监听到输入的按键
 stdin.setRawMode(true);
+// NOTE: resume 会恢复 stdin 流 (默认是暂停的)
 stdin.resume();
+// NOTE: 设置编码格式
 stdin.setEncoding('utf8');
 
 stdin.on('data', (key) => {
   // 处理回车键时，从全局变量获取组件暴露的 increment 方法
   if (key === '\r' || key === '\n') {
+    // NOTE: globalThis 是全局对象，类似于 window ECMAScript 2020 (ES2020) 
+    // NOTE: 直接使用 window 或 global  可能会与局部变量或函数发生命名冲突。  globalThis 作为语言内置的关键字，降低了这种冲突的风险。
     const counterInstance = globalThis.__counterInstance;
     if (counterInstance && typeof counterInstance.increment === 'function') {
       counterInstance.increment();
